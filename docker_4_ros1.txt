@@ -1,0 +1,27 @@
+# worked but not saved
+sudo docker run -v `pwd`:/data -it --rm osrf/ros:melodic-desktop-full bash -c "
+apt update && 
+apt install -y python-pip python-opencv && 
+pip install pykitti progressbar2 &&
+pip install pandas==0.20.3 &&
+cd /data && 
+git clone https://github.com/tomas789/kitti2bag.git /tmp/kitti2bag &&
+cd /tmp/kitti2bag &&
+source /opt/ros/melodic/setup.bash &&
+python -m kitti2bag -t 2011_09_26 -r 0002 raw_synced /data
+"
+
+# this worked
+sudo docker run -v `pwd`:/data -it --rm osrf/ros:melodic-desktop-full bash -c "
+apt update && 
+apt install -y python-pip python-opencv && 
+pip install pykitti progressbar2 &&
+pip install pandas==0.20.3 &&
+cd /data && 
+git clone https://github.com/tomas789/kitti2bag.git /tmp/kitti2bag &&
+cd /tmp/kitti2bag &&
+source /opt/ros/melodic/setup.bash &&
+python -m kitti2bag -t 2011_09_26 -r 0002 raw_synced /data &&
+cp /tmp/kitti2bag/*.bag /data/ || echo 'No bag file found in kitti2bag directory' &&
+ls -la /data/*.bag
+"
