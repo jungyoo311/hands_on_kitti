@@ -25,3 +25,28 @@ python -m kitti2bag -t 2011_09_26 -r 0002 raw_synced /data &&
 cp /tmp/kitti2bag/*.bag /data/ || echo 'No bag file found in kitti2bag directory' &&
 ls -la /data/*.bag
 "
+
+#output
+
+Files:             kitti_ros2_bag.db3
+Bag size:          417.8 MiB
+Storage id:        sqlite3
+Duration:          7.858233213s
+Start:             Sep 26 2011 06:02:44.317411899 (1317042164.317411899)
+End:               Sep 26 2011 06:02:52.175645112 (1317042172.175645112)
+Messages:          1078
+Topic information: Topic: /tf_static | Type: tf2_msgs/msg/TFMessage | Count: 77 | Serialization Format: cdr
+                   Topic: /tf | Type: tf2_msgs/msg/TFMessage | Count: 77 | Serialization Format: cdr
+                   Topic: /kitti/oxts/imu | Type: sensor_msgs/msg/Imu | Count: 77 | Serialization Format: cdr
+                   Topic: /kitti/oxts/gps/fix | Type: sensor_msgs/msg/NavSatFix | Count: 77 | Serialization Format: cdr
+                   Topic: /kitti/oxts/gps/vel | Type: geometry_msgs/msg/TwistStamped | Count: 77 | Serialization Format: cdr
+                   Topic: /kitti/camera_gray_left/image_raw | Type: sensor_msgs/msg/Image | Count: 77 | Serialization Format: cdr
+                   Topic: /kitti/camera_gray_left/camera_info | Type: sensor_msgs/msg/CameraInfo | Count: 77 | Serialization Format: cdr
+                   Topic: /kitti/camera_gray_right/image_raw | Type: sensor_msgs/msg/Image | Count: 77 | Serialization Format: cdr
+                   Topic: /kitti/camera_gray_right/camera_info | Type: sensor_msgs/msg/CameraInfo | Count: 77 | Serialization Format: cdr
+                   Topic: /kitti/camera_color_left/image_raw | Type: sensor_msgs/msg/Image | Count: 77 | Serialization Format: cdr
+                   Topic: /kitti/camera_color_left/camera_info | Type: sensor_msgs/msg/CameraInfo | Count: 77 | Serialization Format: cdr
+                   Topic: /kitti/camera_color_right/image_raw | Type: sensor_msgs/msg/Image | Count: 77 | Serialization Format: cdr
+                   Topic: /kitti/camera_color_right/camera_info | Type: sensor_msgs/msg/CameraInfo | Count: 77 | Serialization Format: cdr
+                   Topic: /kitti/velo/pointcloud | Type: sensor_msgs/msg/PointCloud2 | Count: 77 | Serialization Format: cdr
+
