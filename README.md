@@ -6,7 +6,7 @@ The goal of this task is to generate a ROS2 KITTI bag file and visualize its con
 
 ## TODOs
 - [x] Generate ROS2 version KITTI dataset
-  - Link: [Insert Link to your ROS2 KITTI Dataset Generation Method/Repository Here]
+  - Link: docker_4_ros1.txt
 - [ ] Create a node to subscribe to the topics in the bagfile
 - [ ] Visualize raw RGB images on RViz
 - [ ] Visualize the LiDAR point cloud on RViz
