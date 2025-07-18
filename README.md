@@ -7,8 +7,8 @@ The goal of this task is to generate a ROS2 KITTI bag file and visualize its con
 ## TODOs
 - [x] Generate ROS2 version KITTI dataset
   - Link: docker_4_ros1.txt
-- [ ] Create a node to subscribe to the topics in the bagfile
-- [ ] Visualize raw RGB images on RViz
+- [x] Create a node to subscribe to the topics in the bagfile
+- [x] Visualize raw RGB images on RViz
 - [ ] Visualize the LiDAR point cloud on RViz
 - [ ] Look up what is inside the `tf`/`tf_static` topic and assign the correct frame for each component
   - **Hint:** If each component is visualized in the correct frame, you can see the relative position of the components.
