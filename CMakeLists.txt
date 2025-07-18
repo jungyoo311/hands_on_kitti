@@ -9,14 +9,24 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(rosbag2_cpp REQUIRED)
+find_package(rosbag2_storage REQUIRED)
+find_package(rosbag2_transport REQUIRED)
 
-add_executable(talker src/publisher.cpp)
-target_link_libraries(talker PUBLIC rclcpp::rclcpp ${std_msgs_TARGETS})
 add_executable(listener src/subscriber.cpp)
-target_link_libraries(listener PUBLIC rclcpp::rclcpp ${std_msgs_TARGETS})
+# target_link_libraries(listener PUBLIC rclcpp::rclcpp ${std_msgs_TARGETS})
+
+ament_target_dependencies(listener
+  rclcpp
+  std_msgs
+  sensor_msgs
+  rosbag2_cpp
+  rosbag2_storage
+  rosbag2_transport
+)
 
 install(TARGETS
-  talker
   listener
   DESTINATION lib/${PROJECT_NAME})
 
