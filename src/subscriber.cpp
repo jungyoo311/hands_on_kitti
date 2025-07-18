@@ -23,7 +23,7 @@ class KittiSubscriber : public rclcpp::Node
             );
             rosbag2_storage::StorageOptions storage_options;
             storage_options.uri = bag_filename;
-            storage_options.storage_id = "sqlite3";
+            storage_options.storage_id = "sqlite3"; // no need i think
 
             reader_ = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options); 
             reader_ -> open(storage_options);
@@ -47,9 +47,8 @@ class KittiSubscriber : public rclcpp::Node
                 sensor_msgs::msg::Image::SharedPtr ros_msg = std::make_shared<sensor_msgs::msg::Image>();
                 serialization_.deserialize_message(&serialized_msg, ros_msg.get());
                 publisher_left_raw_image_->publish(*ros_msg);
-
-
             }
+            // ToDo: Visualize Lidar point cloud on RVIZ
         }
         rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_left_raw_image_;
         rclcpp::TimerBase::SharedPtr timer_;
@@ -59,6 +58,8 @@ class KittiSubscriber : public rclcpp::Node
 
 int main(int argc, char ** argv)
 {
+    // should add input argc, argv checker
+    // should add error handling
     rclcpp::init(argc, argv);
     auto node = std::make_shared<KittiSubscriber>(argv[1]);
     rclcpp::spin(node);
