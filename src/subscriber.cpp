@@ -23,7 +23,7 @@ class KittiSubscriber : public rclcpp::Node
             );
             rosbag2_storage::StorageOptions storage_options;
             storage_options.uri = bag_filename;
-            storage_options.storage_id = "sqlite3"; // no need i think
+            //storage_options.storage_id = "sqlite3"; // no need i think
 
             reader_ = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options); 
             reader_ -> open(storage_options);
@@ -53,7 +53,7 @@ class KittiSubscriber : public rclcpp::Node
         rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_left_raw_image_;
         rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::Serialization<sensor_msgs::msg::Image> serialization_;
-        std::unique_ptr<rosbag2_cpp::Reader> reader_;
+        std::unique_ptr<rosbag2_cpp::Reader> reader_; // why we choose unique ptr here?:
 };
 
 int main(int argc, char ** argv)
