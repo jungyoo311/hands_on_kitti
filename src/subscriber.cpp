@@ -12,7 +12,10 @@
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp" // Don't forget to add 
 using namespace std::chrono_literals;
-
+/*
+current logic needs to be modified:
+Bag File -> Node (reads + publishes) -> Topics -> RVIZ2 (subscribes)
+*/
 class KittiSubscriber : public rclcpp::Node
 {
     public:
