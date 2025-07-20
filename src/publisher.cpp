@@ -47,7 +47,7 @@ int main(int argc, char ** argv)
     {
         //get serialized data
         auto serialized_msg = reader.read_next();
-        rclcpp::SerializeMessage extracted_serialized_msg(*serialized_msg -> serialized_data);
+        rclcpp::SerializedMessage extracted_serialized_msg(*serialized_msg -> serialized_data);
 
         if (serialized_msg->topic_name == "/kitti/velo/pointcloud")
         {
@@ -55,10 +55,10 @@ int main(int argc, char ** argv)
             serialization_pointcloud.deserialize_message(&extracted_serialized_msg, &cloud_msg);
             //publish msg
             publisher->publish(cloud_msg);
-            RCLCPP_INFO("point cloud publisehd...");
+            RCLCPP_INFO(node->get_logger(), "point cloud publisehd...");
             //log using RCLCPP_INFO()
             rclcpp::spin_some(node);
-            rclcpp::sleep_for(100ms);
+            rclcpp::sleep_for(500ms);
         }
     }
     

@@ -14,10 +14,19 @@ find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rosbag2_transport REQUIRED)
 
-add_executable(listener src/subscriber.cpp)
+add_executable(publisher src/publisher.cpp)
+add_executable(subscriber src/subscriber.cpp)
 # target_link_libraries(listener PUBLIC rclcpp::rclcpp ${std_msgs_TARGETS})
 
-ament_target_dependencies(listener
+ament_target_dependencies(publisher
+  rclcpp
+  std_msgs
+  sensor_msgs
+  rosbag2_cpp
+  rosbag2_storage
+  rosbag2_transport
+)
+ament_target_dependencies(subscriber
   rclcpp
   std_msgs
   sensor_msgs
@@ -27,7 +36,8 @@ ament_target_dependencies(listener
 )
 
 install(TARGETS
-  listener
+  publisher
+  subscriber
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
