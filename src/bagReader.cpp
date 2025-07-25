@@ -68,8 +68,14 @@ class BagReader : public rclcpp::Node
             RCLCPP_INFO(this->get_logger(), "Bag is opened: %s", bag_path_param.c_str());
             //if topic_name == "image_param": processImage()
             // processPointCloud()
-
+            processImage();
             reader.close();
+
+            reader.open(storage_options);
+            processPointCloud();
+            reader.close();
+
+
         }
         void processImage()
         {
@@ -118,10 +124,10 @@ class BagReader : public rclcpp::Node
                 RCLCPP_INFO(this->get_logger(), "Total point cloud published: %d", cloud_cnt);
             }
         }
-        void processTf()
-        {
+        // void processTf()
+        // {
 
-        }
+        // }
     
     reader.close();
 };

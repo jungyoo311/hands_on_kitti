@@ -6,6 +6,9 @@ colcon build --packages-select hands_on_kitti
 source install/setup.bash
 ros2 run hands_on_kitti listener ../kitti_ros2_bag/kitti_ros2_bag.db3
 ```
+## JJ Feedback
+**Launch File will run the node and RVIZ2. LIDAR have the correct tf2 so that I can see the difference between car frame and lidar frame perspective.**
+
 
 ## Visualize Images
 
