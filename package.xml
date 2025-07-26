@@ -3,7 +3,7 @@
 <package format="3">
   <name>hands_on_kitti</name>
   <version>0.0.0</version>
-  <description>kitti ros2 bag pubsub using rclcpp</description>
+  <description>kitti ros2 bag reader using rclcpp</description>
   <maintainer email="jeongmy@uci.edu">jung</maintainer>
   <license>Apache-2.0</license>
 
@@ -17,6 +17,8 @@
   <depend>rosbag2_cpp</depend>
   <depend>rosbag2_storage</depend>
   <depend>rosbag2_transport</depend>
+  <depend>tf2_msgs</depend>
+  <depend>ament_index_cpp</depend>
 
   <export>
     <build_type>ament_cmake</build_type>  

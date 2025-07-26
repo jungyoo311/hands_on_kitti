@@ -13,6 +13,7 @@
 #include <chrono>
 #include <functional>
 #include <string>
+#include <thread>
 using namespace std::chrono_literals;
 
 class BagReader : public rclcpp::Node
@@ -22,7 +23,7 @@ class BagReader : public rclcpp::Node
         {
             //parameter: {"(str) parameter's name", "(str) default value"}
             this->declare_parameter<std::string>("bag_path", "../kitti_ros2_bag/kitti_ros2_bag.db3");
-            this->declare_parameter<std::string>("raw_image", "/kitti/camera/color_left/image_raw");
+            this->declare_parameter<std::string>("raw_image", "/kitti/camera_color_left/image_raw");
             this->declare_parameter<std::string>("point_cloud", "/kitti/velo/pointcloud");
             this->declare_parameter<std::string>("tf", "/tf");
 
@@ -31,10 +32,11 @@ class BagReader : public rclcpp::Node
             image_param = this->get_parameter("raw_image").as_string();
             point_cloud_param = this->get_parameter("point_cloud").as_string();
             tf_param = this->get_parameter("tf").as_string();
-
+            //initailize reader before use
+            reader = std::make_unique<rosbag2_cpp::Reader>();
             //initailize publishers in constructor
-            image_publisher = this->create_publisher<sensor_msgs::msg::Image>("/kitti/camera_color_left/image_raw", 10);
-            point_cloud_publisher = this->create_publisher<sensor_msgs::msg::PointCloud2>("/kitti/velo/pointcloud", 10);
+            publisher_left_raw_image = this->create_publisher<sensor_msgs::msg::Image>("/kitti/camera_color_left/image_raw", 10);
+            publisher_point_cloud = this->create_publisher<sensor_msgs::msg::PointCloud2>("/kitti/velo/pointcloud", 10);
             //callback
             callback();
         }
@@ -64,18 +66,18 @@ class BagReader : public rclcpp::Node
             storage_options.uri = bag_path_param;
             storage_options.storage_id = "sqlite3";
             
-            reader.open(storage_options);
+            reader->open(storage_options);
             RCLCPP_INFO(this->get_logger(), "Bag is opened: %s", bag_path_param.c_str());
             //if topic_name == "image_param": processImage()
             // processPointCloud()
             processImage();
-            reader.close();
+            reader->close();
 
-            reader.open(storage_options);
+            reader->open(storage_options);
             processPointCloud();
-            reader.close();
-
-
+            reader->close();
+            RCLCPP_INFO(this->get_logger(), "Bag Reading finished");
+            rclcpp::shutdown();
         }
         void processImage()
         {
@@ -84,9 +86,9 @@ class BagReader : public rclcpp::Node
             RCLCPP_INFO(this->get_logger(), "Processing Images...");
             int image_cnt = 0;
 
-            while(reader.has_next() && rclcpp::ok())
+            while(reader->has_next() && rclcpp::ok())
             {
-                auto serialized_msg = reader.read_next();
+                auto serialized_msg = reader->read_next();
                 if (serialized_msg->topic_name == image_param)
                 {
                     //serialized data
@@ -96,22 +98,22 @@ class BagReader : public rclcpp::Node
                     //publish msg
                     publisher_left_raw_image->publish(left_img_msg);
                     image_cnt++;
-
+                    std::this_thread::sleep_for(std::chrono::milliseconds(200));
                 }
-                RCLCPP_INFO(this->get_logger(), "Total left_raw_image published: %d", image_cnt);
             }
+            RCLCPP_INFO(this->get_logger(), "Total left_raw_image published: %d", image_cnt);
         }
         void processPointCloud()
         {
             sensor_msgs::msg::PointCloud2 cloud_msg;
             rclcpp::Serialization<sensor_msgs::msg::PointCloud2> serialization_pointcloud;
             RCLCPP_INFO(this->get_logger(), "Processing Point Clouds...");
-            int cloud_cnt;
+            int cloud_cnt = 0;
 
-            while(reader.has_next() && rclcpp::ok())
+            while(reader->has_next() && rclcpp::ok())
             {
                 //get serialized data
-                auto serialized_msg = reader.read_next();
+                auto serialized_msg = reader->read_next();
                 if (serialized_msg -> topic_name == point_cloud_param)
                 {
                     rclcpp::SerializedMessage extracted_serialized_msg(*serialized_msg -> serialized_data);
@@ -119,17 +121,16 @@ class BagReader : public rclcpp::Node
                     serialization_pointcloud.deserialize_message(&extracted_serialized_msg, &cloud_msg);
                     //publish msg
                     publisher_point_cloud->publish(cloud_msg);
+                    cloud_cnt++;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(200));
                 }
-                
-                RCLCPP_INFO(this->get_logger(), "Total point cloud published: %d", cloud_cnt);
             }
+            RCLCPP_INFO(this->get_logger(), "Total point cloud published: %d", cloud_cnt);
         }
         // void processTf()
         // {
 
         // }
-    
-    reader.close();
 };
 
 int main(int argc, char ** argv)
@@ -142,6 +143,6 @@ int main(int argc, char ** argv)
         RCLCPP_ERROR(rclcpp::get_logger("main"), "Error: %s", e.what());
         return 1;
     }
-    rclcpp::shutdown();
+    // rclcpp::shutdown();
     return 0;
 }
