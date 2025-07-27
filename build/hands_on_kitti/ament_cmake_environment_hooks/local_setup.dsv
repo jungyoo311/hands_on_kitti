@@ -1,0 +1,2 @@
+source;share/hands_on_kitti/environment/ament_prefix_path.sh
+source;share/hands_on_kitti/environment/path.sh

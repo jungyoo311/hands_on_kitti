@@ -1,0 +1,8 @@
+source;share/hands_on_kitti/hook/cmake_prefix_path.ps1
+source;share/hands_on_kitti/hook/cmake_prefix_path.dsv
+source;share/hands_on_kitti/hook/cmake_prefix_path.sh
+source;share/hands_on_kitti/local_setup.bash
+source;share/hands_on_kitti/local_setup.dsv
+source;share/hands_on_kitti/local_setup.ps1
+source;share/hands_on_kitti/local_setup.sh
+source;share/hands_on_kitti/local_setup.zsh
