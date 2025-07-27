@@ -11,6 +11,7 @@
 #include <tf2_msgs/msg/tf_message.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 #include <chrono>
 #include <functional>
 #include <string>
@@ -81,102 +82,84 @@ class BagReader : public rclcpp::Node
             storage_options.uri = bag_path_param;
             storage_options.storage_id = "sqlite3";
             
-            // reader->open(storage_options);
-            // RCLCPP_INFO(this->get_logger(), "Bag is opened: %s", bag_path_param.c_str());
-            // //if topic_name == "image_param": processImage()
-            // // processPointCloud()
-            // processImage();
-            // reader->close();
-
-            // reader->open(storage_options);
-            // processPointCloud();
-            // reader->close();
-            // RCLCPP_INFO(this->get_logger(), "Bag Reading finished");
-            
             reader->open(storage_options);
-            processTf();
-            reader->close();
-
             RCLCPP_INFO(this->get_logger(), "Bag reading completed");
+        
+            sensor_msgs::msg::Image left_img_msg;
+            sensor_msgs::msg::PointCloud2 cloud_msg;
+            tf2_msgs::msg::TFMessage tf_msg;
+
+            rclcpp::Serialization<sensor_msgs::msg::Image> serialization_left_image;
+            rclcpp::Serialization<sensor_msgs::msg::PointCloud2> serialization_pointcloud;
+            rclcpp::Serialization<tf2_msgs::msg::TFMessage> serialization_tf;
+
+            int img_cnt = 0, cloud_cnt = 0, tf_cnt = 0;
+
+            while(reader->has_next() && rclcpp::ok())
+            {
+                // serialized data -> deserialized data -> publish msg/broadcast data
+                // need to pass them as parameters to each processing function.
+                auto serialized_msg = reader->read_next();
+                rclcpp::SerializedMessage extracted_serialized_msg(*serialized_msg -> serialized_data);
+                if(serialized_msg->topic_name == image_param){
+                    processImage(extracted_serialized_msg);
+                    img_cnt++;
+                } else if(serialized_msg->topic_name == point_cloud_param){
+                    processPointCloud(extracted_serialized_msg);
+                    cloud_cnt++;
+                } else if(serialized_msg->topic_name == tf_param){
+                    processTf(extracted_serialized_msg);
+                    tf_cnt++;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            }
+
+            RCLCPP_INFO(this->get_logger(), "Processing Done");
+            RCLCPP_INFO(this->get_logger(), "[LOG] Total Images processed: %d", img_cnt);
+            RCLCPP_INFO(this->get_logger(), "[LOG] Total Point Clouds processed: %d", cloud_cnt);
+            RCLCPP_INFO(this->get_logger(), "[LOG] Total TF processed: %d", tf_cnt);
+            reader->close();
             rclcpp::shutdown();
         }
-        void processImage()
+        void processImage(rclcpp::SerializedMessage& extracted_serialized_msg)
         {
             sensor_msgs::msg::Image left_img_msg;
             rclcpp::Serialization<sensor_msgs::msg::Image> serialization_left_image;
             RCLCPP_INFO(this->get_logger(), "Processing Images...");
-            int image_cnt = 0;
-
-            while(reader->has_next() && rclcpp::ok())
-            {
-                auto serialized_msg = reader->read_next();
-                if (serialized_msg->topic_name == image_param)
-                {
-                    //serialized data
-                    rclcpp::SerializedMessage extracted_serialized_msg(*serialized_msg -> serialized_data);
-                    //deserialized data
-                    serialization_left_image.deserialize_message(&extracted_serialized_msg, &left_img_msg);
-                    //publish msg
-                    publisher_left_raw_image->publish(left_img_msg);
-                    image_cnt++;
-                    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-                }
-            }
-            RCLCPP_INFO(this->get_logger(), "Total left_raw_image published: %d", image_cnt);
+            
+            //deserialized data
+            serialization_left_image.deserialize_message(&extracted_serialized_msg, &left_img_msg);
+            //publish msg
+            publisher_left_raw_image->publish(left_img_msg);
         }
-        void processPointCloud()
+        void processPointCloud(rclcpp::SerializedMessage& extracted_serialized_msg)
         {
             sensor_msgs::msg::PointCloud2 cloud_msg;
             rclcpp::Serialization<sensor_msgs::msg::PointCloud2> serialization_pointcloud;
             RCLCPP_INFO(this->get_logger(), "Processing Point Clouds...");
-            int cloud_cnt = 0;
 
-            while(reader->has_next() && rclcpp::ok())
-            {
-                //get serialized data
-                auto serialized_msg = reader->read_next();
-                if (serialized_msg -> topic_name == point_cloud_param)
-                {
-                    rclcpp::SerializedMessage extracted_serialized_msg(*serialized_msg -> serialized_data);
-                    //deserialized data
-                    serialization_pointcloud.deserialize_message(&extracted_serialized_msg, &cloud_msg);
-                    //publish msg
-                    publisher_point_cloud->publish(cloud_msg);
-                    cloud_cnt++;
-                    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-                }
-            }
-            RCLCPP_INFO(this->get_logger(), "Total point cloud published: %d", cloud_cnt);
+            //deserialized data
+            serialization_pointcloud.deserialize_message(&extracted_serialized_msg, &cloud_msg);
+            //publish msg
+            publisher_point_cloud->publish(cloud_msg);
         }
-        void processTf()
+        void processTf(rclcpp::SerializedMessage& extracted_serialized_msg)
         {
             // tf2 contains multiple coordinate frame relationships
             // broadcast individual transforms separetely.
             tf2_msgs::msg::TFMessage tf_msg;
             rclcpp::Serialization<tf2_msgs::msg::TFMessage> serialization_tf;
             RCLCPP_INFO(this->get_logger(), "Processing TF records from rosbag2...");
-            int tf_cnt = 0;
-
-            while(reader->has_next() && rclcpp::ok())
+        
+            serialization_tf.deserialize_message(&extracted_serialized_msg, &tf_msg);
+            //broadcast msg, separately
+            // it's array, i need to iterate
+            for(const auto& t : tf_msg.transforms)
             {
-                auto serialized_msg = reader->read_next();
-                if(serialized_msg->topic_name == tf_param)
-                {
-                    rclcpp::SerializedMessage extracted_serialized_msg(*serialized_msg -> serialized_data);
-                    serialization_tf.deserialize_message(&extracted_serialized_msg, &tf_msg);
-                    //broadcast msg, separately
-                    // it's array, i need to iterate
-                    for(const auto& t : tf_msg.transforms)
-                    {
-                        broadcaster_tf->sendTransform(t);
-
-                    }
-                    tf_cnt++;
-                    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-                }
+                broadcaster_tf->sendTransform(t);
             }
-            RCLCPP_INFO(this->get_logger(), "Total tf transformation processed: %d", tf_cnt);
-        }   
+        }
+         
 };
 
 int main(int argc, char ** argv)
@@ -189,6 +172,5 @@ int main(int argc, char ** argv)
         RCLCPP_ERROR(rclcpp::get_logger("main"), "Error: %s", e.what());
         return 1;
     }
-    // rclcpp::shutdown();
     return 0;
 }
