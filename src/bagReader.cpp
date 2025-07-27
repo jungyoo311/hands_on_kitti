@@ -17,8 +17,18 @@
 #include <thread>
 using namespace std::chrono_literals;
 /*
-Lidar have the correct tf so that i can see the difference 
-between car frame and lidar frame perspective.
+right image add first? synchronization first?
+
+synchroniation first bc of easier debugging
+TODO: synchornize image, pc2, tf
+1. process all msgs together not separately
+2. maintain original timestamps
+3. publish with timing control
+
+each step for synchronized playback:
+1. loads all msgs into memory first
+2. sorts by timestamp to maintain original sequence
+3. publishes with proper timing to show data it was recorded
 */
 class BagReader : public rclcpp::Node
 {
