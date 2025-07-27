@@ -6,16 +6,20 @@
 #include <rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
-// header files to refer
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <tf2_ros/transform_broadcaster.h>
 #include <chrono>
 #include <functional>
 #include <string>
 #include <thread>
 using namespace std::chrono_literals;
-
+/*
+Lidar have the correct tf so that i can see the difference 
+between car frame and lidar frame perspective.
+*/
 class BagReader : public rclcpp::Node
 {
     public:
@@ -35,8 +39,10 @@ class BagReader : public rclcpp::Node
             //initailize reader before use
             reader = std::make_unique<rosbag2_cpp::Reader>();
             //initailize publishers in constructor
-            publisher_left_raw_image = this->create_publisher<sensor_msgs::msg::Image>("/kitti/camera_color_left/image_raw", 10);
-            publisher_point_cloud = this->create_publisher<sensor_msgs::msg::PointCloud2>("/kitti/velo/pointcloud", 10);
+            publisher_left_raw_image = this->create_publisher<sensor_msgs::msg::Image>(image_param, 10);
+            publisher_point_cloud = this->create_publisher<sensor_msgs::msg::PointCloud2>(point_cloud_param, 10);
+            
+            broadcaster_tf = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
             //callback
             callback();
         }
@@ -55,28 +61,33 @@ class BagReader : public rclcpp::Node
         std::unique_ptr<rosbag2_cpp::Reader> reader;
         rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_left_raw_image;
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_point_cloud;
-        // vary function call with parameter inputs
-        //ToDo
-
+        
+        std::shared_ptr<tf2_ros::TransformBroadcaster> broadcaster_tf;
+        
         void callback()
         {
-            
             // rosbag2 storage options
             rosbag2_storage::StorageOptions storage_options;
             storage_options.uri = bag_path_param;
             storage_options.storage_id = "sqlite3";
             
+            // reader->open(storage_options);
+            // RCLCPP_INFO(this->get_logger(), "Bag is opened: %s", bag_path_param.c_str());
+            // //if topic_name == "image_param": processImage()
+            // // processPointCloud()
+            // processImage();
+            // reader->close();
+
+            // reader->open(storage_options);
+            // processPointCloud();
+            // reader->close();
+            // RCLCPP_INFO(this->get_logger(), "Bag Reading finished");
+            
             reader->open(storage_options);
-            RCLCPP_INFO(this->get_logger(), "Bag is opened: %s", bag_path_param.c_str());
-            //if topic_name == "image_param": processImage()
-            // processPointCloud()
-            processImage();
+            processTf();
             reader->close();
 
-            reader->open(storage_options);
-            processPointCloud();
-            reader->close();
-            RCLCPP_INFO(this->get_logger(), "Bag Reading finished");
+            RCLCPP_INFO(this->get_logger(), "Bag reading completed");
             rclcpp::shutdown();
         }
         void processImage()
@@ -127,10 +138,35 @@ class BagReader : public rclcpp::Node
             }
             RCLCPP_INFO(this->get_logger(), "Total point cloud published: %d", cloud_cnt);
         }
-        // void processTf()
-        // {
+        void processTf()
+        {
+            // tf2 contains multiple coordinate frame relationships
+            // broadcast individual transforms separetely.
+            tf2_msgs::msg::TFMessage tf_msg;
+            rclcpp::Serialization<tf2_msgs::msg::TFMessage> serialization_tf;
+            RCLCPP_INFO(this->get_logger(), "Processing TF records from rosbag2...");
+            int tf_cnt = 0;
 
-        // }
+            while(reader->has_next() && rclcpp::ok())
+            {
+                auto serialized_msg = reader->read_next();
+                if(serialized_msg->topic_name == tf_param)
+                {
+                    rclcpp::SerializedMessage extracted_serialized_msg(*serialized_msg -> serialized_data);
+                    serialization_tf.deserialize_message(&extracted_serialized_msg, &tf_msg);
+                    //broadcast msg, separately
+                    // it's array, i need to iterate
+                    for(const auto& t : tf_msg.transforms)
+                    {
+                        broadcaster_tf->sendTransform(t);
+
+                    }
+                    tf_cnt++;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                }
+            }
+            RCLCPP_INFO(this->get_logger(), "Total tf transformation processed: %d", tf_cnt);
+        }   
 };
 
 int main(int argc, char ** argv)

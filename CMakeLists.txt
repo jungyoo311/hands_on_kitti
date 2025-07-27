@@ -15,6 +15,8 @@ find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rosbag2_transport REQUIRED)
 find_package(tf2_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 add_executable(reader src/bagReader.cpp)
 
@@ -26,6 +28,8 @@ ament_target_dependencies(reader
   rosbag2_storage
   rosbag2_transport
   tf2_msgs
+  tf2_ros
+  geometry_msgs
   ament_index_cpp
 )
 
