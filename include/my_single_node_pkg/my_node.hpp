@@ -1,5 +1,6 @@
 #ifndef MY_NODE_HPP
 #define MY_NODE_HPP
+
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/serialization.hpp>
 #include <std_msgs/msg/string.hpp>

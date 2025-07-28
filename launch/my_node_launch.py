@@ -9,7 +9,7 @@ def generate_launch_description():
         executable="reader",
         name="bag_reader_node",
         parameters=[{
-            "bag_path": "../kitti_ros2_bag/kitti_ros2_bag.db3",
+            "bag_path": "../kitti_ros2_bag/kitti_ros2_bag.db3", # this should not be hardcoded
             "raw_image": "/kitti/camera_color_left/image_raw",
             "point_cloud":"/kitti/velo/pointcloud",
             "tf": "/tf"
