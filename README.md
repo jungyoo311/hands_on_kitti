@@ -13,3 +13,4 @@ The goal of this task is to generate a ROS2 KITTI bag file and visualize its con
 - [ ] Look up what is inside the `tf`/`tf_static` topic and assign the correct frame for each component
   - **Hint:** If each component is visualized in the correct frame, you can see the relative position of the components.
 
+efef
