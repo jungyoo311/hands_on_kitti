@@ -15,111 +15,102 @@ each step for synchronized playback:
 */
 BagReader::BagReader() : Node("bag_reader")
 {
-    //parameter: {"(str) parameter's name", "(str) default value"}
-    this->declare_parameter<std::string>("bag_path", "../kitti_ros2_bag/kitti_ros2_bag.db3");
-    this->declare_parameter<std::string>("raw_image", "/kitti/camera_color_left/image_raw");
-    this->declare_parameter<std::string>("point_cloud", "/kitti/velo/pointcloud");
+    //topics
+    this->declare_parameter<std::string>("input_left_raw_img", "/kitti/camera_color_left/image_raw");
+    this->declare_parameter<std::string>("output_left_raw_img", "/rviz/camera_color_left/image_raw");
+    this->declare_parameter<std::string>("input_right_raw_img", "/kitti/camera_color_right/image_raw");
+    this->declare_parameter<std::string>("output_right_raw_img", "/rviz/camera_color_right/image_raw");
+    this->declare_parameter<std::string>("input_point_cloud", "/kitti/velo/pointcloud");
+    this->declare_parameter<std::string>("output_point_cloud", "/rviz/velo/pointcloud");
     this->declare_parameter<std::string>("tf", "/tf");
+    this->declare_parameter<std::string>("tf_static", "/tf_static");
 
-    //get param
-    bag_path_param = this->get_parameter("bag_path").as_string();
-    image_param = this->get_parameter("raw_image").as_string();
-    point_cloud_param = this->get_parameter("point_cloud").as_string();
-    tf_param = this->get_parameter("tf").as_string();
-    //initailize reader before use
-    reader = std::make_unique<rosbag2_cpp::Reader>();
-    //initailize publishers in constructor
-    publisher_left_raw_image = this->create_publisher<sensor_msgs::msg::Image>(image_param, 10);
-    publisher_point_cloud = this->create_publisher<sensor_msgs::msg::PointCloud2>(point_cloud_param, 10);
+    //get params
+    std::string input_left_raw_img = this->get_parameter("input_left_raw_img").as_string();
+    std::string output_left_raw_img = this->get_parameter("output_left_raw_img").as_string();
+    std::string input_right_raw_img = this->get_parameter("input_right_raw_img").as_string();
+    std::string output_right_raw_img = this->get_parameter("output_right_raw_img").as_string();
+    std::string input_point_cloud = this->get_parameter("input_point_cloud").as_string();
+    std::string output_point_cloud = this->get_parameter("output_point_cloud").as_string();
+    std::string input_tf = this->get_parameter("tf").as_string();
+    std::string input_tf_static = this->get_parameter("tf_static").as_string();
+
+    //subscribe to rosbag2
+    left_raw_img_sub = this->create_subscription<sensor_msgs::msg::Image>(input_left_raw_img, 10,
+    std::bind(&BagReader::processImageLeft, this, std::placeholders::_1));
+    right_raw_img_sub = this->create_subscription<sensor_msgs::msg::Image>(input_right_raw_img, 10,
+    std::bind(&BagReader::processImageRight, this, std::placeholders::_1));
+    point_cloud_sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(input_point_cloud, 10,
+    std::bind(&BagReader::processPointCloud, this, std::placeholders::_1));
+    tf_sub = this->create_subscription<tf2_msgs::msg::TFMessage>(input_tf, 10,
+    std::bind(&BagReader::processTf, this, std::placeholders::_1));
+    tf_static_sub = this->create_subscription<tf2_msgs::msg::TFMessage>(input_tf_static, 10,
+    std::bind(&BagReader::processTf, this, std::placeholders::_1));
+
+    //publisher to rviz2
+    left_raw_img_pub = this->create_publisher<sensor_msgs::msg::Image>(output_left_raw_img, 10);
+    right_raw_img_pub = this->create_publisher<sensor_msgs::msg::Image>(output_right_raw_img, 10);
+    point_cloud_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>(output_point_cloud, 10);
     
-    broadcaster_tf = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
-    //callback
-    callback();
+    //tf broadcaster
+    tf_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+    
+    left_img_cnt = 0, right_img_cnt = 0, point_cloud_cnt = 0, tf_cnt = 0;
 }
+
+void BagReader::processImageLeft(const sensor_msgs::msg::Image::SharedPtr msg)
+{   
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    RCLCPP_INFO(this->get_logger(), "Processing LEFT Images...");
+    left_img_cnt++;
+    //TODO
+    /*implement canny edge detection of image_left_raw*/
+    /*I want to compare with the lidar point cloud detection result for sanity check*/
     
-void BagReader::callback()
-{
-    // rosbag2 storage options
-    rosbag2_storage::StorageOptions storage_options;
-    storage_options.uri = bag_path_param;
-    storage_options.storage_id = "sqlite3";
-    
-    reader->open(storage_options);
-    RCLCPP_INFO(this->get_logger(), "Bag reading completed");
-
-    sensor_msgs::msg::Image left_img_msg;
-    sensor_msgs::msg::PointCloud2 cloud_msg;
-    tf2_msgs::msg::TFMessage tf_msg;
-
-    rclcpp::Serialization<sensor_msgs::msg::Image> serialization_left_image;
-    rclcpp::Serialization<sensor_msgs::msg::PointCloud2> serialization_pointcloud;
-    rclcpp::Serialization<tf2_msgs::msg::TFMessage> serialization_tf;
-
-    int img_cnt = 0, cloud_cnt = 0, tf_cnt = 0;
-
-    while(reader->has_next() && rclcpp::ok())
-    {
-        // serialized data -> deserialized data -> publish msg/broadcast data
-        auto serialized_msg = reader->read_next();
-        rclcpp::SerializedMessage extracted_serialized_msg(*serialized_msg -> serialized_data);
-        if(serialized_msg->topic_name == image_param){
-            processImage(extracted_serialized_msg);
-            img_cnt++;
-        } else if(serialized_msg->topic_name == point_cloud_param){
-            processPointCloud(extracted_serialized_msg);
-            cloud_cnt++;
-        } else if(serialized_msg->topic_name == tf_param){
-            processTf(extracted_serialized_msg);
-            tf_cnt++;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
-
-    RCLCPP_INFO(this->get_logger(), "Processing Done");
-    RCLCPP_INFO(this->get_logger(), "[LOG] Total Images processed: %d", img_cnt);
-    RCLCPP_INFO(this->get_logger(), "[LOG] Total Point Clouds processed: %d", cloud_cnt);
-    RCLCPP_INFO(this->get_logger(), "[LOG] Total TF processed: %d", tf_cnt);
-    reader->close();
-    rclcpp::shutdown();
-}
-void BagReader::processImage(rclcpp::SerializedMessage& extracted_serialized_msg)
-{
-    sensor_msgs::msg::Image left_img_msg;
-    rclcpp::Serialization<sensor_msgs::msg::Image> serialization_left_image;
-    RCLCPP_INFO(this->get_logger(), "Processing Images...");
-    
-    //deserialized data
-    serialization_left_image.deserialize_message(&extracted_serialized_msg, &left_img_msg);
     //publish msg
-    publisher_left_raw_image->publish(left_img_msg);
+    left_raw_img_pub->publish(*msg);
 }
-void BagReader::processPointCloud(rclcpp::SerializedMessage& extracted_serialized_msg)
+void BagReader::processImageRight(const sensor_msgs::msg::Image::SharedPtr msg)
 {
-    sensor_msgs::msg::PointCloud2 cloud_msg;
-    rclcpp::Serialization<sensor_msgs::msg::PointCloud2> serialization_pointcloud;
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    RCLCPP_INFO(this->get_logger(), "Processing RIGHT Images...");
+    right_img_cnt++;
+    //publish
+    right_raw_img_pub->publish(*msg);
+}
+void BagReader::processPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
     RCLCPP_INFO(this->get_logger(), "Processing Point Clouds...");
-
-    //deserialized data
-    serialization_pointcloud.deserialize_message(&extracted_serialized_msg, &cloud_msg);
+    point_cloud_cnt++;
+    //fix frame
+    auto fix_msg = *msg;
+    fix_msg.header.frame_id = "world";
+    
     //publish msg
-    publisher_point_cloud->publish(cloud_msg);
+    point_cloud_pub->publish(*fix_msg);
 }
-void BagReader::processTf(rclcpp::SerializedMessage& extracted_serialized_msg)
+void BagReader::processTf(const tf2_msgs::msg::TFMessage::SharedPtr msg)
 {
-    // tf2 contains multiple coordinate frame relationships
-    // broadcast individual transforms separetely.
-    tf2_msgs::msg::TFMessage tf_msg;
-    rclcpp::Serialization<tf2_msgs::msg::TFMessage> serialization_tf;
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
     RCLCPP_INFO(this->get_logger(), "Processing TF records from rosbag2...");
-
-    serialization_tf.deserialize_message(&extracted_serialized_msg, &tf_msg);
+    tf_cnt++;
     //broadcast msg, separately
     // it's array, i need to iterate
-    for(const auto& t : tf_msg.transforms)
+    for(const auto& t : msg->transforms)
     {
-        broadcaster_tf->sendTransform(t);
+        tf_broadcaster->sendTransform(t);
     }
 }
+void BagReader::processTfStatic(const tf2_msgs::msg::TFMessage::SharedPtr msg)
+{
+    for(const auto& t : msg->transforms)
+    {
+        tf_broadcaster->sendTransform(t);
+    }
+}
+
+BagReader::~BagReader(){}
 
 int main(int argc, char ** argv)
 {
@@ -131,5 +122,6 @@ int main(int argc, char ** argv)
         RCLCPP_ERROR(rclcpp::get_logger("main"), "Error: %s", e.what());
         return 1;
     }
+    rclcpp::shutdown();
     return 0;
 }

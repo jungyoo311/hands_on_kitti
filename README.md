@@ -1,5 +1,5 @@
 ## Visualize Images and Point Clouds
-
+bag playback + processing node + visualization
 **Build and Source:**
 ```bash
 colcon build --packages-select hands_on_kitti
