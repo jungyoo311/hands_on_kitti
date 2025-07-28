@@ -63,11 +63,6 @@ class BagReader : public rclcpp::Node
         std::string image_param;
         std::string point_cloud_param;
         std::string tf_param;
-
-        // converter options
-        // rosbag2_cpp::ConverterOptions converter_options;
-        // converter_options.input_serialization_format = "cdr";
-        // converter_options.output_serialization_format = "cdr";
         
         std::unique_ptr<rosbag2_cpp::Reader> reader;
         rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_left_raw_image;
@@ -159,7 +154,6 @@ class BagReader : public rclcpp::Node
                 broadcaster_tf->sendTransform(t);
             }
         }
-         
 };
 
 int main(int argc, char ** argv)
