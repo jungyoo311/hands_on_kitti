@@ -11,10 +11,18 @@
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>rosbag2_cpp</depend>
+  <depend>rosbag2_storage</depend>
+  <depend>rosbag2_transport</depend>
+  <depend>tf2_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>geometry_msgs</depend>
+  <depend>ament_index_cpp</depend>
 
   <export>
-    <build_type>ament_cmake</build_type>
-    <depend>rclcpp</depend>
-    <depend>std_msgs</depend>
+    <build_type>ament_cmake</build_type>  
   </export>
 </package>

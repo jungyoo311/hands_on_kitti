@@ -7,18 +7,37 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(rosbag2_cpp REQUIRED)
+find_package(rosbag2_storage REQUIRED)
+find_package(rosbag2_transport REQUIRED)
+find_package(tf2_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
-add_executable(talker src/publisher.cpp)
-target_link_libraries(talker PUBLIC rclcpp::rclcpp ${std_msgs_TARGETS})
-add_executable(listener src/subscriber.cpp)
-target_link_libraries(listener PUBLIC rclcpp::rclcpp ${std_msgs_TARGETS})
+add_executable(reader src/bagReader.cpp)
+
+ament_target_dependencies(reader
+  rclcpp
+  std_msgs
+  sensor_msgs
+  rosbag2_cpp
+  rosbag2_storage
+  rosbag2_transport
+  tf2_msgs
+  tf2_ros
+  geometry_msgs
+  ament_index_cpp
+)
 
 install(TARGETS
-  talker
-  listener
+  reader
   DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}/)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
