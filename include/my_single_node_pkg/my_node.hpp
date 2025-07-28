@@ -1,6 +1,5 @@
 #ifndef MY_NODE_HPP
 #define MY_NODE_HPP
-
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/serialization.hpp>
 #include <std_msgs/msg/string.hpp>
@@ -15,44 +14,31 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/static_transform_broadcaster.h>
-#include <opencv2/opencv.hpp>
-
 #include <chrono>
 #include <functional>
 #include <string>
 #include <thread>
 #include <memory>
-
 using namespace std::chrono_literals;
 
 class BagReader : public rclcpp::Node
 {
     public:
         BagReader();
-        ~BagReader();
     private:
-        rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr left_raw_img_sub;
-        rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr right_raw_img_sub;
-        rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_sub;
-        rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr tf_sub;
-        rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr tf_static_sub;
+        std::string bag_path_param;
+        std::string image_param;
+        std::string point_cloud_param;
+        std::string tf_param;
 
-        rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr left_raw_img_pub;
-        rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr right_raw_img_pub;
-        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_pub;
+        std::unique_ptr<rosbag2_cpp::Reader> reader;
+        rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_left_raw_image;
+        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_point_cloud;
+        std::shared_ptr<tf2_ros::TransformBroadcaster> broadcaster_tf;
 
-        std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster;
-
-        
-        void processImageLeft(const sensor_msgs::msg::Image::SharedPtr msg);
-        void processImageRight(const sensor_msgs::msg::Image::SharedPtr msg);
-        void processPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
-        void processTf(const tf2_msgs::msg::TFMessage::SharedPtr msg);
-        void processTfStatic(const tf2_msgs::msg::TFMessage::SharedPtr msg);
-        
-        int left_img_cnt;
-        int right_img_cnt;
-        int point_cloud_cnt;
-        int tf_cnt;
+        void callback();
+        void processImage(rclcpp::SerializedMessage& extracted_serialized_msg);
+        void processPointCloud(rclcpp::SerializedMessage& extracted_serialized_msg);
+        void processTf(rclcpp::SerializedMessage& extracted_serialized_msg);
 };
 #endif
