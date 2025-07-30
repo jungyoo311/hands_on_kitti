@@ -17,6 +17,8 @@ find_package(rosbag2_transport REQUIRED)
 find_package(tf2_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(OpenCV REQUIRED)
 
 add_executable(reader src/bagReader.cpp)
 
@@ -31,8 +33,15 @@ ament_target_dependencies(reader
   tf2_ros
   geometry_msgs
   ament_index_cpp
+  cv_bridge
 )
-
+include_directories(
+  include
+  ${OpenCV_INCLUDE_DIRS}
+)
+target_link_libraries(reader
+  ${OpenCV_LIBS}
+)
 install(TARGETS
   reader
   DESTINATION lib/${PROJECT_NAME})

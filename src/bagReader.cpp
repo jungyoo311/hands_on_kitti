@@ -55,7 +55,10 @@ BagReader::BagReader() : Node("bag_reader")
     //tf broadcaster
     tf_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     
-    left_img_cnt = 0, right_img_cnt = 0, point_cloud_cnt = 0, tf_cnt = 0;
+    img_w = 640;
+    img_h = 640;
+    thres_high = 255;
+    thres_low = 85;
 }
 
 void BagReader::processImageLeft(const sensor_msgs::msg::Image::SharedPtr msg)
@@ -66,7 +69,22 @@ void BagReader::processImageLeft(const sensor_msgs::msg::Image::SharedPtr msg)
     //TODO
     /*implement canny edge detection of image_left_raw*/
     /*I want to compare with the lidar point cloud detection result for sanity check*/
+
+    // ros img msg to cv matrix format
+    cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    original = cv_ptr->image;
+    cv::cvtColor(original, rgb_img, cv::COLOR_BGR2RGB);
+    cv::resize(original, resized_img, cv::Size(img_w, img_h));
+    cv::cvtColor(original, gray_img, cv::COLOR_BGR2GRAY);
+    cv::Canny(gray_img, canny_img, thres_low, thres_high);
     
+    cv::Mat top_row, bot_row, display;
+    cv::hconcat(rgb_img, resized_img, top_row);
+    cv::hconcat(original, canny_img, bot_row);
+    cv::vconcat(top_row, bot_row, display);
+
+    cv::imshow("2x2 visualization", display);
+    cv::waitKey(1);
     //publish msg
     left_raw_img_pub->publish(*msg);
 }
@@ -88,7 +106,7 @@ void BagReader::processPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr
     fix_msg.header.frame_id = "world";
     
     //publish msg
-    point_cloud_pub->publish(*fix_msg);
+    point_cloud_pub->publish(fix_msg);
 }
 void BagReader::processTf(const tf2_msgs::msg::TFMessage::SharedPtr msg)
 {
@@ -110,7 +128,9 @@ void BagReader::processTfStatic(const tf2_msgs::msg::TFMessage::SharedPtr msg)
     }
 }
 
-BagReader::~BagReader(){}
+BagReader::~BagReader(){
+    cv::destroyAllWindows();
+}
 
 int main(int argc, char ** argv)
 {

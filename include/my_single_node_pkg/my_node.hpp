@@ -15,6 +15,11 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/static_transform_broadcaster.h>
+
+//opencv
+#include <cv_bridge/cv_bridge.h>
+#include <opencv2/opencv.hpp>
+
 #include <chrono>
 #include <functional>
 #include <string>
@@ -22,24 +27,51 @@
 #include <memory>
 using namespace std::chrono_literals;
 
+#define DEFAULT_IMAGE_DIMENSION 0
+#define DEFAULT_CNT 0
+#define ZERO 0
 class BagReader : public rclcpp::Node
 {
     public:
         BagReader();
+        ~BagReader();
     private:
-        std::string bag_path_param;
-        std::string image_param;
-        std::string point_cloud_param;
-        std::string tf_param;
 
-        std::unique_ptr<rosbag2_cpp::Reader> reader;
-        rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_left_raw_image;
-        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_point_cloud;
-        std::shared_ptr<tf2_ros::TransformBroadcaster> broadcaster_tf;
+        // Subscriptions
+        rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr left_raw_img_sub;
+        rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr right_raw_img_sub;
+        rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_sub;
+        rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr tf_sub;
+        rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr tf_static_sub;
+        
+        // Publishers
+        rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr left_raw_img_pub;
+        rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr right_raw_img_pub;
+        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_pub;
+        
+        // TF broadcaster
+        std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster;
 
-        void callback();
-        void processImage(rclcpp::SerializedMessage& extracted_serialized_msg);
-        void processPointCloud(rclcpp::SerializedMessage& extracted_serialized_msg);
-        void processTf(rclcpp::SerializedMessage& extracted_serialized_msg);
+        void processImageLeft(const sensor_msgs::msg::Image::SharedPtr msg);
+        void processImageRight(const sensor_msgs::msg::Image::SharedPtr msg);
+        void processPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
+        void processTf(const tf2_msgs::msg::TFMessage::SharedPtr msg);
+        void processTfStatic(const tf2_msgs::msg::TFMessage::SharedPtr msg);
+
+        int left_img_cnt = DEFAULT_CNT;
+        int right_img_cnt = DEFAULT_CNT;
+        int point_cloud_cnt = DEFAULT_CNT;
+        int tf_cnt = DEFAULT_CNT;
+        int img_w = DEFAULT_IMAGE_DIMENSION;
+        int img_h = DEFAULT_IMAGE_DIMENSION;
+        int thres_high = ZERO;
+        int thres_low = ZERO;
+
+        cv::Mat original;
+        cv::Mat rgb_img;
+        cv::Mat resized_img;
+        cv::Mat gray_img;
+        cv::Mat canny_img;
+        cv_bridge::CvImagePtr cv_ptr;
 };
 #endif

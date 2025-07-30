@@ -8,12 +8,6 @@ def generate_launch_description():
         package="hands_on_kitti",
         executable="reader",
         name="bag_reader_node",
-        parameters=[{
-            "bag_path": "../kitti_ros2_bag/kitti_ros2_bag.db3", # this should not be hardcoded
-            "raw_image": "/kitti/camera_color_left/image_raw",
-            "point_cloud":"/kitti/velo/pointcloud",
-            "tf": "/tf"
-        }],
         output='screen'
     )
     rviz_node = Node(
@@ -22,6 +16,14 @@ def generate_launch_description():
         name="rviz2",
         output='screen'
     )
+    vehicle_frame = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="vehicle_frame",
+        arguments=["0", "0", "-1.73", "0", "0", "0", "world", "base_link"],
+        output='screen'
+    )
     ld.add_action(bag_reader_node)
+    ld.add_action(vehicle_frame)
     ld.add_action(rviz_node)
     return ld
