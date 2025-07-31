@@ -79,9 +79,10 @@ void BagReader::processImageLeft(const sensor_msgs::msg::Image::SharedPtr msg)
     cv::cvtColor(resized_img, gray_img, cv::COLOR_BGR2GRAY);
     cv::Canny(gray_img, canny_img, thres_low, thres_high);
     cv::cvtColor(canny_img, canny_3ch, cv::COLOR_GRAY2BGR);
+    cv::cvtColor(gray_img, gray_3ch, cv::COLOR_GRAY2BGR);
     cv::Mat top_row, bot_row, display;
     cv::hconcat(rgb_img, resized_img, top_row);
-    cv::hconcat(resized_img, canny_3ch, bot_row);
+    cv::hconcat(gray_3ch, canny_3ch, bot_row);
     cv::vconcat(top_row, bot_row, display);
 
     cv::imshow("2x2 visualization", display);
@@ -103,11 +104,11 @@ void BagReader::processPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr
     RCLCPP_INFO(this->get_logger(), "Processing Point Clouds...");
     point_cloud_cnt++;
     //fix frame
-    auto fix_msg = *msg;
-    fix_msg.header.frame_id = "world";
+    // auto fix_msg = *msg;
+    // fix_msg.header.frame_id = "base_link";
     
     //publish msg
-    point_cloud_pub->publish(fix_msg);
+    point_cloud_pub->publish(*msg);
 }
 void BagReader::processTf(const tf2_msgs::msg::TFMessage::SharedPtr msg)
 {
