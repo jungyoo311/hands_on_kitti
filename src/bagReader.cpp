@@ -73,14 +73,15 @@ void BagReader::processImageLeft(const sensor_msgs::msg::Image::SharedPtr msg)
     // ros img msg to cv matrix format
     cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
     original = cv_ptr->image;
-    cv::cvtColor(original, rgb_img, cv::COLOR_BGR2RGB);
     cv::resize(original, resized_img, cv::Size(img_w, img_h));
-    cv::cvtColor(original, gray_img, cv::COLOR_BGR2GRAY);
-    cv::Canny(gray_img, canny_img, thres_low, thres_high);
+    cv::cvtColor(resized_img, rgb_img, cv::COLOR_BGR2RGB);
     
+    cv::cvtColor(resized_img, gray_img, cv::COLOR_BGR2GRAY);
+    cv::Canny(gray_img, canny_img, thres_low, thres_high);
+    cv::cvtColor(canny_img, canny_3ch, cv::COLOR_GRAY2BGR);
     cv::Mat top_row, bot_row, display;
     cv::hconcat(rgb_img, resized_img, top_row);
-    cv::hconcat(original, canny_img, bot_row);
+    cv::hconcat(resized_img, canny_3ch, bot_row);
     cv::vconcat(top_row, bot_row, display);
 
     cv::imshow("2x2 visualization", display);

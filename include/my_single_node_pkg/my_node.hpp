@@ -72,6 +72,7 @@ class BagReader : public rclcpp::Node
         cv::Mat resized_img;
         cv::Mat gray_img;
         cv::Mat canny_img;
+        cv::Mat canny_3ch;
         cv_bridge::CvImagePtr cv_ptr;
 };
 #endif
