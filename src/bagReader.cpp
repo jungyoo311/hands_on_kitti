@@ -1,18 +1,5 @@
 #include "../include/my_single_node_pkg/my_node.hpp"
-/*
-right image add first? synchronization first?
 
-synchroniation first bc of easier debugging
-TODO: synchornize image, pc2, tf
-1. process all msgs together not separately
-2. maintain original timestamps
-3. publish with timing control
-
-each step for synchronized playback:
-1. loads all msgs into memory first
-2. sorts by timestamp to maintain original sequence
-3. publishes with proper timing to show data it was recorded
-*/
 BagReader::BagReader() : Node("bag_reader")
 {
     //topics
@@ -129,7 +116,10 @@ void BagReader::processTfStatic(const tf2_msgs::msg::TFMessage::SharedPtr msg)
         tf_broadcaster->sendTransform(t);
     }
 }
-
+void createDepthMap(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
+{
+    
+}
 BagReader::~BagReader(){
     cv::destroyAllWindows();
 }

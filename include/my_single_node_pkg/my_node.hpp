@@ -19,12 +19,14 @@
 //opencv
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
+#include <opencv2/calib3d.hpp>
 
 #include <chrono>
 #include <functional>
 #include <string>
 #include <thread>
 #include <memory>
+#include <cmath>
 using namespace std::chrono_literals;
 
 #define DEFAULT_IMAGE_DIMENSION 0
@@ -49,6 +51,7 @@ class BagReader : public rclcpp::Node
         rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr right_raw_img_pub;
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_pub;
         
+
         // TF broadcaster
         std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster;
 
@@ -57,7 +60,7 @@ class BagReader : public rclcpp::Node
         void processPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
         void processTf(const tf2_msgs::msg::TFMessage::SharedPtr msg);
         void processTfStatic(const tf2_msgs::msg::TFMessage::SharedPtr msg);
-
+        void createDepthMap(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
         int left_img_cnt = DEFAULT_CNT;
         int right_img_cnt = DEFAULT_CNT;
         int point_cloud_cnt = DEFAULT_CNT;

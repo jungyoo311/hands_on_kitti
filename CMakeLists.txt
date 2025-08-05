@@ -19,31 +19,43 @@ find_package(tf2_ros REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(message_filters REQUIRED)
 
-add_executable(reader src/bagReader.cpp)
+# add_executable(reader src/bagReader.cpp)
+add_executable(depth_map src/depthMap.cpp)
 
-ament_target_dependencies(reader
+# ament_target_dependencies(reader
+#   rclcpp
+#   std_msgs
+#   sensor_msgs
+#   rosbag2_cpp
+#   rosbag2_storage
+#   rosbag2_transport
+#   tf2_msgs
+#   tf2_ros
+#   geometry_msgs
+#   ament_index_cpp
+#   cv_bridge
+# )
+ament_target_dependencies(depth_map
   rclcpp
   std_msgs
-  sensor_msgs
-  rosbag2_cpp
-  rosbag2_storage
-  rosbag2_transport
-  tf2_msgs
-  tf2_ros
-  geometry_msgs
   ament_index_cpp
+  sensor_msgs
   cv_bridge
+  message_filters
+  rosbag2_cpp
 )
 include_directories(
   include
   ${OpenCV_INCLUDE_DIRS}
 )
-target_link_libraries(reader
+target_link_libraries(depth_map
   ${OpenCV_LIBS}
 )
 install(TARGETS
-  reader
+  # reader
+  depth_map
   DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}/)

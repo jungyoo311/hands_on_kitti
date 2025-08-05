@@ -20,4 +20,10 @@ ros2 interface show tf2_msgs/msg/TFMessage
 ## JJ Feedback
 **Launch File will run the node and RVIZ2. LIDAR have the correct tf2 so that I can see the difference between car frame and lidar frame perspective.**
 
+https://learnopencv.com/depth-perception-using-stereo-camera-python-c/#from-disparity-map-to-depth-map
 
+
+
+https://arxiv.org/pdf/2507.07935
+
+https://docs.opencv.org/4.x/d1/da0/tutorial_remap.html
