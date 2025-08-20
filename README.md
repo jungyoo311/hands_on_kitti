@@ -1,3 +1,7 @@
+## Demo
+![RGB Depth Map](assets/color_depth_map.png)
+![Grayscale Depth Map](assets/grayscale_depth_map.png)
+
 ## Visualize Images and Point Clouds
 bag playback + processing node + visualization
 **Build and Source:**
