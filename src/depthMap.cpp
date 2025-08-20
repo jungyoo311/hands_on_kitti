@@ -1,32 +1,24 @@
+/**
+ * @file depthMap.cpp
+ * @author Jung
+ * @brief This file generate rgb depth map from kitti ros bag
+ * @date 08-04-2025
+ * @copyright Jung
+ */
+
 #include "../include/my_single_node_pkg/depth_map_node.hpp"
-/*
-1.sub - left, right, camera_info | pub - depth, pc
-2.load focal len, baseline from camera_info
-3. how to retrieve synced left-right imgs
-4. Run StereoSGBM for raw_disparity, (WLS filter for filtered_disparity)
-5. Convert Disparity map to depth map
-5-a. for each pixel: depth = (f*B)/ disparity
 
-7a. pub depth map as ros img msg
--- From here do it if i can
-6. generate 3d pc for each depth pixel
-7b. pub pc as PointCloud2 msg
-*/
-
-DepthMapNode::DepthMapNode() : Node("depth_map")
+DepthMapNode::DepthMapNode() : Node("depth_map"),
+    fx_(0.0),
+    fy_(0.0),
+    cx_(0.0),
+    cy_(0.0),
+    baseline(0.0),
+    calibration_loaded(false),
+    window_size(11),
+    min_disp(0),
+    num_disp(112)
 {
-
-    fx_ = 0.0;
-    fy_ = 0.0;
-    cx_ = 0.0;
-    cy_ = 0.0;
-    baseline = 0.0;
-    calibration_loaded = false;
-    window_size = 11;
-    min_disp = 0;
-    // num_disp = min_disp*14 - 16;
-    num_disp = 112;
-
     this->declare_parameter<std::string>("input_left_gray_img", "/kitti/camera_gray_left/image_raw");
     this->declare_parameter<std::string>("input_right_gray_img", "/kitti/camera_gray_right/image_raw");
     this->declare_parameter<std::string>("input_camera_info", "/kitti/camera_gray_right/camera_info");
@@ -57,6 +49,7 @@ DepthMapNode::DepthMapNode() : Node("depth_map")
         RCLCPP_INFO(this->get_logger(), "msg filter synchronizer initialized successfully");
     } catch(const std::exception& e){
         RCLCPP_INFO(this->get_logger(), "Failed to initialize QOS : %s", e.what());
+        throw;
     }
 
     try{
@@ -75,6 +68,7 @@ DepthMapNode::DepthMapNode() : Node("depth_map")
         );
     } catch(const std::exception& e ){
         RCLCPP_INFO(this->get_logger(), "Failed to initialize SGBM : %s", e.what());
+        throw;
     }
     RCLCPP_INFO(this->get_logger(), "END OF CONSTRUCTOR");
 }
@@ -122,9 +116,9 @@ void DepthMapNode::processDepthMap(const cv::Mat& left_gray, const cv::Mat& righ
     int process_pixels = 0;
 
     for (int y = 0; y < disparityMap.rows; ++y){
-        for(int x = 0; x < disparityMap.cols; x++){
+        for(int x = 0; x < disparityMap.cols; ++x){
             // type conversion for disparity
-            int16_t disparity_raw = disparityMap.at<int16_t>(y,x);
+            int16_t disparity_raw = disparityMap.at<int16_t>(y,x); // eigen? c+==
             if(disparity_raw > 0)
             {
                 float disparity = static_cast<float>(disparity_raw) / 16.0f;
@@ -135,9 +129,7 @@ void DepthMapNode::processDepthMap(const cv::Mat& left_gray, const cv::Mat& righ
                     depthMap.at<float>(y,x) = depth;
                     process_pixels++;
                 }
-                
             }
-            
         }
     }
     RCLCPP_INFO(this->get_logger(), "DEPTH PROCESSED");
@@ -159,16 +151,6 @@ void DepthMapNode::processDepthMap(const cv::Mat& left_gray, const cv::Mat& righ
 }
 void DepthMapNode::processSync(const sensor_msgs::msg::Image::ConstSharedPtr& left_msg, const sensor_msgs::msg::Image::ConstSharedPtr& right_msg)
 {   
-    // static int sync_cnt = 0;
-    // sync_cnt++;
-    // if (sync_cnt % 10 == 1) {
-    //     RCLCPP_INFO(this->get_logger(), " SYNC #%d called", sync_cnt);
-    // }
-    
-    // if (!calibration_loaded) {
-    //     if (sync_cnt % 10 == 1) RCLCPP_WARN(this->get_logger(), "No calibration");
-    //     return;
-    // }
     try{
         // use messagefilter to retreive synced images.
         cv_bridge::CvImagePtr left_cv_ptr = cv_bridge::toCvCopy(left_msg);
@@ -179,8 +161,6 @@ void DepthMapNode::processSync(const sensor_msgs::msg::Image::ConstSharedPtr& le
     } catch(const std::exception& e){
         RCLCPP_INFO(this->get_logger(), "syncing error %s", e.what());
     }
-
-    
 }
 
 DepthMapNode::~DepthMapNode(){}

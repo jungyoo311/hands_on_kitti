@@ -21,22 +21,8 @@ find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(message_filters REQUIRED)
 
-# add_executable(reader src/bagReader.cpp)
 add_executable(depth_map src/depthMap.cpp)
 
-# ament_target_dependencies(reader
-#   rclcpp
-#   std_msgs
-#   sensor_msgs
-#   rosbag2_cpp
-#   rosbag2_storage
-#   rosbag2_transport
-#   tf2_msgs
-#   tf2_ros
-#   geometry_msgs
-#   ament_index_cpp
-#   cv_bridge
-# )
 ament_target_dependencies(depth_map
   rclcpp
   std_msgs

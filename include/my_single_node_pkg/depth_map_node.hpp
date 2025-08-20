@@ -47,8 +47,9 @@ class DepthMapNode : public rclcpp::Node
         std::shared_ptr<message_filters::Synchronizer<message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::Image, sensor_msgs::msg::Image>>> sync;
 
         void processCameraInfo(const sensor_msgs::msg::CameraInfo::SharedPtr msg);
-        void processSync(const sensor_msgs::msg::Image::ConstSharedPtr& left_msg, const sensor_msgs::msg::Image::ConstSharedPtr& right_msg);
         void processDepthMap(const cv::Mat& left_gray, const cv::Mat& right_gray);
+        void processSync(const sensor_msgs::msg::Image::ConstSharedPtr& left_msg, const sensor_msgs::msg::Image::ConstSharedPtr& right_msg);
+        
 };
 
 #endif
