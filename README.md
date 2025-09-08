@@ -1,5 +1,9 @@
 # Stereo Vision Depth Estimation
 Depth map from KITTI stereo camera feeds using ROS2 and OpenCV.
+
+## Demo
+![RGB Depth Map](assets/color_depth_map.png)
+![Grayscale Depth Map](assets/grayscale_depth_map.png)
 ## What it does
 
 This project processes synchronized stereo camera feeds from KITTI dataset to generate accurate depth maps. The system extracts camera calibration from ROS topics, performs stereo matching using StereoSGBM, and converts disparity to real-world depth measurements with colorized visualization.
@@ -12,9 +16,7 @@ This project processes synchronized stereo camera feeds from KITTI dataset to ge
 
 Working with stereo vision taught me about camera calibration importance and timestamp synchronization challenges. The main challenge was achieving real-time performance while maintaining accuracy, solved through optimized StereoSGBM parameters and efficient message filtering.
 
-## Demo
-![RGB Depth Map](assets/color_depth_map.png)
-![Grayscale Depth Map](assets/grayscale_depth_map.png)
+
 
 ## Visualize Images and Point Clouds
 bag playback + processing node + visualization
